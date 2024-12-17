@@ -16,10 +16,14 @@ class RankingViewModel {
     @Published var error: Error?
 
     // "周興哲""Taylor Swift""Maroon 5"
-    private let searchArtist = "Taylor Swift"
+    private let searchArtist = "Yoasobi"
     private let pageSize = 36
     private var cancellables = Set<AnyCancellable>()
-    private let likeManager = LikeManager()
+    private let likeManager: LikeManaging
+
+    init(likeManager: LikeManaging = LikeManager()) {
+        self.likeManager = likeManager
+    }
 
     func fetchData() {
         isLoading = true
@@ -56,7 +60,7 @@ class RankingViewModel {
     }
 
     func createDetailListViewModel() -> DetailListViewModel {
-        return DetailListViewModel(initialSongs: songs, searchArtist: searchArtist)
+        return DetailListViewModel(initialSongs: songs, searchArtist: searchArtist, likeManager: likeManager)
     }
 
     func toggleLike(for song: Song) {

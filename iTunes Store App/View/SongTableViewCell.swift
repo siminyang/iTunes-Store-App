@@ -122,13 +122,15 @@ class SongTableViewCell: UITableViewCell {
         likeAction?()
     }
 
-    func configure(with song: Song, index: Int, isLiked: Bool, likeAction: @escaping () -> Void) {
+    func configure(with song: Song, index: Int, isLiked: Bool) {
         numberLabel.text = "\(index + 1)"
         albumImageView.kf.setImage(with: URL(string: song.artworkUrl100))
         songNameLabel.text = song.trackName
         artistAlbumLabel.text = "\(song.artistName) - \(song.collectionName)"
         likeButton.isSelected = isLiked
+    }
 
-        self.likeAction = likeAction
+    func pressLikeAction(_ action: @escaping () -> Void) {
+        likeAction = action
     }
 }

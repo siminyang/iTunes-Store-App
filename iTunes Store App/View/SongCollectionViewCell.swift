@@ -109,12 +109,14 @@ class SongCollectionViewCell: UICollectionViewCell {
         likeAction?()
     }
 
-    func configure(with song: Song, index: Int, isLiked: Bool, likeAction: @escaping () -> Void) {
+    func configure(with song: Song, index: Int, isLiked: Bool) {
         albumImageView.kf.setImage(with: URL(string: song.artworkUrl100))
         songNameLabel.text = "\(index + 1). \(song.trackName)"
         artistAlbumLabel.text = "\(song.artistName) - \(song.collectionName)"
         likeButton.isSelected = isLiked
+    }
 
-        self.likeAction = likeAction
+    func pressLikeAction(_ action: @escaping () -> Void) {
+        likeAction = action
     }
 }

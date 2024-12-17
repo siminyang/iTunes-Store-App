@@ -128,12 +128,16 @@ extension DetailListViewController: UITableViewDataSource, UITableViewDelegate {
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: SongTableViewCell.identifier, for: indexPath) as! SongTableViewCell
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: SongTableViewCell.identifier, for: indexPath) as? SongTableViewCell else {
+            return UITableViewCell()
+        }
         let song = viewModel.songs[indexPath.row]
 
-        cell.configure(with: song, index: indexPath.row, isLiked: viewModel.isLiked(for: song)) { [weak self] in
-            self?.viewModel.toggleLike(for: song)
-            self?.delegate?.detailListViewController(self!, didUpdateLikeStateFor: song)
+        cell.configure(with: song, index: indexPath.row, isLiked: viewModel.isLiked(for: song))
+        cell.pressLikeAction { [weak self] in
+            guard let self = self else { return }
+            self.viewModel.toggleLike(for: song)
+            self.delegate?.detailListViewController(self, didUpdateLikeStateFor: song)
         }
         return cell
     }
@@ -141,14 +145,9 @@ extension DetailListViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 80
     }
-}
 
-// MARK: - UIScrollViewDelegate
-extension DetailListViewController {
-    func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        let offsetY = scrollView.contentOffset.y
-        let contentHeight = scrollView.contentSize.height
-        if offsetY > contentHeight - scrollView.frame.height * 1.5 && !viewModel.isLoading && viewModel.hasMoreData {
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        if indexPath.item == viewModel.songs.count - 10 && !viewModel.isLoading && viewModel.hasMoreData {
             loadMoreData()
         }
     }

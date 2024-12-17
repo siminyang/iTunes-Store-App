@@ -8,6 +8,11 @@
 import UIKit
 import Combine
 
+enum RankingSection: Int, CaseIterable {
+    case songs = 0
+    case albums = 1
+}
+
 class RankingViewController: UIViewController {
 
     // MARK: - Properties
@@ -57,6 +62,9 @@ class RankingViewController: UIViewController {
         setupUI()
         setupNavigationBar()
         bindViewModel()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
         viewModel.fetchData()
     }
 
@@ -166,24 +174,43 @@ class RankingViewController: UIViewController {
 // MARK: - CollectionViewDataSource, CollectionViewDelegate
 extension RankingViewController: UICollectionViewDataSource, UICollectionViewDelegate {
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return 2
+        return RankingSection.allCases.count
     }
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return section == 0 ? min(viewModel.songs.count, 36) : min(viewModel.albums.count, 36)
+        guard let section = RankingSection(rawValue: section) else { return 0 }
+
+        switch section {
+        case .songs:
+            return min(viewModel.songs.count, 36)
+        case .albums:
+            return min(viewModel.albums.count, 36)
+        }
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        if indexPath.section == 0 {
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: SongCollectionViewCell.identifier, for: indexPath) as! SongCollectionViewCell
+
+        guard let section = RankingSection(rawValue: indexPath.section) else {
+            return UICollectionViewCell()
+        }
+
+        switch section {
+        case .songs:
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: SongCollectionViewCell.identifier, for: indexPath) as? SongCollectionViewCell else {
+                return UICollectionViewCell()
+            }
             let song = viewModel.songs[indexPath.item]
 
-            cell.configure(with: song, index: indexPath.item, isLiked: viewModel.isLiked(for: song)) { [weak self] in
+            cell.configure(with: song, index: indexPath.item, isLiked: viewModel.isLiked(for: song))
+            cell.pressLikeAction { [weak self] in
                 self?.viewModel.toggleLike(for: song)
             }
             return cell
-        } else {
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: AlbumCollectionViewCell.identifier, for: indexPath) as! AlbumCollectionViewCell
+
+        case .albums:
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: AlbumCollectionViewCell.identifier, for: indexPath) as? AlbumCollectionViewCell else {
+                return UICollectionViewCell()
+            }
             let album = viewModel.albums[indexPath.item]
 
             cell.configure(with: album, index: indexPath.item)
@@ -193,25 +220,28 @@ extension RankingViewController: UICollectionViewDataSource, UICollectionViewDel
 
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
         guard kind == UICollectionView.elementKindSectionHeader else { return UICollectionReusableView() }
+        guard let headerView = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: SectionHeaderView.identifier, for: indexPath) as? SectionHeaderView else { 
+            return UICollectionReusableView()
+        }
+        guard let section = RankingSection(rawValue: indexPath.section) else {
+            return UICollectionReusableView()
+        }
 
-        let headerView = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: SectionHeaderView.identifier, for: indexPath) as! SectionHeaderView
-        headerView.configure(title: indexPath.section == 0 ? "歌曲" : "專輯")
-
-        if indexPath.section == 0 {
-            headerView.showAllButton.addTarget(self, action: #selector(showAllTapped(_:)), for: .touchUpInside)
-            headerView.showAllButton.tag = indexPath.section
-        } else {
+        switch section {
+        case .songs:
+            headerView.configure(title: "歌曲")
+            headerView.showAllAction = { [weak self] in
+                if let detailViewModel = self?.viewModel.createDetailListViewModel() {
+                    let detailVC = DetailListViewController(viewModel: detailViewModel, section: indexPath.section)
+                    self?.navigationController?.pushViewController(detailVC, animated: true)
+                }
+            }
+        case .albums:
+            headerView.configure(title: "專輯")
             headerView.showAllButton.isUserInteractionEnabled = false
         }
 
         return headerView
-    }
-
-    @objc private func showAllTapped(_ sender: UIButton) {
-        let detailViewModel = viewModel.createDetailListViewModel()
-        let detailVC = DetailListViewController(viewModel: detailViewModel, section: 0)
-        detailVC.delegate = self
-        navigationController?.pushViewController(detailVC, animated: true)
     }
 }
 

@@ -26,10 +26,13 @@ class SectionHeaderView: UICollectionReusableView {
         return button
     }()
 
+    var showAllAction: (() -> Void)?
+
     // MARK: - Lifecycle
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupLayout()
+        setupshowAllButton()
     }
 
     required init?(coder: NSCoder) {
@@ -51,6 +54,14 @@ class SectionHeaderView: UICollectionReusableView {
             showAllButton.centerYAnchor.constraint(equalTo: centerYAnchor),
             showAllButton.trailingAnchor.constraint(equalTo: trailingAnchor)
         ])
+    }
+
+    private func setupshowAllButton() {
+        showAllButton.addTarget(self, action: #selector(showAllTapped), for: .touchUpInside)
+    }
+
+    @objc private func showAllTapped(_ sender: UIButton) {
+        showAllAction?()
     }
 
     func configure(title: String) {

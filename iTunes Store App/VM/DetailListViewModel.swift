@@ -19,12 +19,13 @@ class DetailListViewModel {
     private var currentSongOffset = 0
     private let pageSize = 36
     private var cancellables = Set<AnyCancellable>()
-    private let likeManager = LikeManager()
+    private let likeManager: LikeManaging
 
-    init(initialSongs: [Song], searchArtist: String) {
+    init(initialSongs: [Song], searchArtist: String, likeManager: LikeManaging) {
         self.songs = initialSongs
         self.searchArtist = searchArtist
         self.currentSongOffset = initialSongs.count
+        self.likeManager = likeManager
     }
 
     func loadMoreSongs() -> AnyPublisher<[Song], Error> {
